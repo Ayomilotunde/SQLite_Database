@@ -1,14 +1,21 @@
 package com.ayomi.sqlitedatabase;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -23,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
     MyDatabaseHelper myDatabaseHelper;
     ArrayList<String> bookID, bookTitle, bookAuthor, bookPages;
 
+    TextView NoData;
     CustomAdapters customAdapters;
 
     @Override
@@ -31,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         recyclerView = findViewById(R.id.recyclerView);
         addButton = findViewById(R.id.addButton);
+        NoData = findViewById(R.id.txtNoData);
 
         addButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -62,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
     void storeDataInArray(){
         Cursor cursor = myDatabaseHelper.readAllData();
         if (cursor.getCount() == 0){
-            Toast.makeText(this, "No Data", Toast.LENGTH_SHORT).show();
+            NoData.setVisibility(View.VISIBLE);
         }else {
             while (cursor.moveToNext()){
                 bookID.add(cursor.getString(0));
@@ -70,6 +79,47 @@ public class MainActivity extends AppCompatActivity {
                 bookAuthor.add(cursor.getString(2));
                 bookPages.add(cursor.getString(3));
             }
+            NoData.setVisibility(View.GONE);
         }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.my_menu, menu);
+
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == R.id.deleteAll){
+            confirmDialog();
+        }
+
+        return super.onOptionsItemSelected(item);
+
+    }
+
+    void confirmDialog(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Delete All Data?");
+        builder.setMessage("Are you sure you want to delete All Data?");
+        builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                MyDatabaseHelper myDatabaseHelper = new MyDatabaseHelper(MainActivity.this);
+                myDatabaseHelper.deleteAllData();
+                recreate();
+                Toast.makeText(MainActivity.this, "Deleted all books", Toast.LENGTH_SHORT).show();
+            }
+        });
+        builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+
+            }
+        });
+        builder.create().show();
     }
 }
